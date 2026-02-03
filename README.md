@@ -106,7 +106,7 @@ flowchart TB
         direction LR
         Settings["settings.json<br/>settings.local.json<br/>keybindings.json"]
         Auth[".credentials.json"]
-        Extensions["plugins/ hooks/<br/>commands/ skills/<br/>agents/"]
+        Extensions["hooks/ commands/<br/>skills/ agents/"]
         Memory["CLAUDE.md<br/>rules/"]
         Cache["statsig/"]
     end
@@ -114,7 +114,7 @@ flowchart TB
     CWD -->|"mount (rw)"| Workspace
     GlobalConfig --> GlobalMounts
     GlobalMounts --> ClaudeHome
-    ProjectData -->|"history, todos,<br/>plans, tasks (per-project)"| ClaudeHome
+    ProjectData -->|"history, todos,<br/>plans, tasks,<br/>plugins (per-project)"| ClaudeHome
     GCloud -->|"mount (ro)"| Container
 
     ClaudeCode --> Workspace
@@ -132,7 +132,6 @@ flowchart TB
 | `~/.claude/.credentials.json` | API credentials | Shared |
 | `~/.claude.json` | Claude config | Shared |
 | **Extensions** | | |
-| `~/.claude/plugins/` | Installed plugins | Shared |
 | `~/.claude/hooks/` | Custom hooks | Shared |
 | `~/.claude/commands/` | Global slash commands | Shared |
 | `~/.claude/skills/` | Global skills | Shared |
@@ -141,7 +140,7 @@ flowchart TB
 | `~/.claude/CLAUDE.md` | Global memory/instructions | Shared |
 | `~/.claude/rules/` | Global rules | Shared |
 | **Project Data** | | |
-| `~/.claude/ccbox-projects/{name}_{hash}/` | History, todos, plans, tasks | Per-project |
+| `~/.claude/ccbox-projects/{name}_{hash}/` | History, todos, plans, tasks, plugins | Per-project |
 
 Each project directory gets isolated session data based on a hash of the workspace path, so you can have multiple projects with the same name in different locations. Multiple concurrent sessions in the same project share this data.
 
@@ -163,8 +162,8 @@ To add allowed domains, clone the repo and edit `firewall-domains.txt`, then use
 
 ```bash
 echo "example.com" >> firewall-domains.txt
-ccbox --build
-ccbox --local --with-firewall
+./ccbox --build
+./ccbox --local --with-firewall
 ```
 
 </details>

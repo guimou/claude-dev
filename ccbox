@@ -53,6 +53,7 @@ setup_project_dirs() {
     mkdir -p "${project_dir}/todos"
     mkdir -p "${project_dir}/plans"
     mkdir -p "${project_dir}/tasks"
+    mkdir -p "${project_dir}/plugins"
     touch "${project_dir}/history.jsonl"
 
     echo "$project_dir"
@@ -69,7 +70,6 @@ ensure_global_config() {
     # Global memory file (empty is fine)
     [[ -f "${config_dir}/CLAUDE.md" ]] || touch "${config_dir}/CLAUDE.md"
     # Directories
-    [[ -d "${config_dir}/plugins" ]] || mkdir -p "${config_dir}/plugins"
     [[ -d "${config_dir}/statsig" ]] || mkdir -p "${config_dir}/statsig"
     [[ -d "${config_dir}/hooks" ]] || mkdir -p "${config_dir}/hooks"
     [[ -d "${config_dir}/commands" ]] || mkdir -p "${config_dir}/commands"
@@ -119,6 +119,7 @@ NO_FIREWALL=true
 NO_CLIPBOARD=false
 LIST_SESSIONS=false
 CLAUDE_VERSION=""
+NPM_GLOBAL=""
 EXTRA_ARGS=()
 
 while [[ $# -gt 0 ]]; do
@@ -151,6 +152,14 @@ while [[ $# -gt 0 ]]; do
             NO_CLIPBOARD=true
             shift
             ;;
+        --npm-global)
+            NPM_GLOBAL="$2"
+            shift 2
+            ;;
+        --npm-global=*)
+            NPM_GLOBAL="${1#*=}"
+            shift
+            ;;
         --)
             shift
             EXTRA_ARGS=("$@")
@@ -167,6 +176,7 @@ while [[ $# -gt 0 ]]; do
             echo "  --claude-version VERSION Use specific Claude Code version"
             echo "  --with-firewall          Enable network firewall restrictions"
             echo "  --no-clipboard           Disable clipboard access (for extra security)"
+            echo "  --npm-global PATH        Mount npm global prefix (auto-detected if not set)"
             echo "  --list-sessions          List active sessions for this project"
             echo "  -h, --help               Show this help message"
             echo ""
@@ -307,6 +317,11 @@ ensure_global_config "$CLAUDE_CONFIG_DIR"
 PROJECT_DATA_DIR=$(setup_project_dirs "$WORKSPACE_DIR" "$CLAUDE_CONFIG_DIR")
 migrate_if_needed "$PROJECT_DATA_DIR" "$CLAUDE_CONFIG_DIR"
 
+# Auto-detect npm global prefix if not explicitly set
+if [[ -z "$NPM_GLOBAL" ]]; then
+    NPM_GLOBAL=$(npm config get prefix 2>/dev/null || echo "")
+fi
+
 # Build podman run arguments
 PODMAN_ARGS=(
     --rm
@@ -322,7 +337,6 @@ PODMAN_ARGS=(
     -v "${CLAUDE_CONFIG_DIR}/.credentials.json:/home/claude/.claude/.credentials.json:Z"
     -v "${CLAUDE_CONFIG_DIR}/keybindings.json:/home/claude/.claude/keybindings.json:Z"
     -v "${CLAUDE_CONFIG_DIR}/CLAUDE.md:/home/claude/.claude/CLAUDE.md:Z"
-    -v "${CLAUDE_CONFIG_DIR}/plugins:/home/claude/.claude/plugins:Z"
     -v "${CLAUDE_CONFIG_DIR}/statsig:/home/claude/.claude/statsig:Z"
     -v "${CLAUDE_CONFIG_DIR}/hooks:/home/claude/.claude/hooks:Z"
     -v "${CLAUDE_CONFIG_DIR}/commands:/home/claude/.claude/commands:Z"
@@ -335,6 +349,7 @@ PODMAN_ARGS=(
     -v "${PROJECT_DATA_DIR}/todos:/home/claude/.claude/todos:Z"
     -v "${PROJECT_DATA_DIR}/plans:/home/claude/.claude/plans:Z"
     -v "${PROJECT_DATA_DIR}/tasks:/home/claude/.claude/tasks:Z"
+    -v "${PROJECT_DATA_DIR}/plugins:/home/claude/.claude/plugins:Z"
     # Other config files
     -v "${HOME}/.claude.json:/home/claude/.claude.json:Z"
     -v "${GOOGLE_CONFIG_DIR}:/home/claude/.config/gcloud:ro,Z"
@@ -374,6 +389,11 @@ if ! $NO_CLIPBOARD; then
             PODMAN_ARGS+=(-v "${HOME}/.Xauthority:/home/claude/.Xauthority:ro,Z")
         fi
     fi
+fi
+
+# Mount npm global packages (read-only) if available and not a system directory
+if [[ -n "$NPM_GLOBAL" && "$NPM_GLOBAL" != "/usr" && "$NPM_GLOBAL" != "/usr/local" && -d "$NPM_GLOBAL" ]]; then
+    PODMAN_ARGS+=(-v "${NPM_GLOBAL}:/home/claude/.npm-global:ro,Z")
 fi
 
 # Add firewall capabilities if firewall is enabled

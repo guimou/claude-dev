@@ -36,9 +36,9 @@ COPY firewall-domains.txt /etc/ccbox/firewall-domains.txt
 COPY init-firewall.sh /usr/local/bin/init-firewall.sh
 RUN chmod +x /usr/local/bin/init-firewall.sh
 
-# Allow claude user to run firewall script as root without password
-RUN echo "claude ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" >> /etc/sudoers.d/claude-firewall && \
-    chmod 0440 /etc/sudoers.d/claude-firewall
+# Allow claude user to run firewall init as root without password
+RUN echo "claude ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" >> /etc/sudoers.d/claude && \
+    chmod 0440 /etc/sudoers.d/claude
 
 # Install Claude Code using native installer
 # Switch to claude user for installation
@@ -56,7 +56,8 @@ RUN if [ -z "${CLAUDE_VERSION}" ]; then \
     fi
 
 # Add Claude to PATH (native installer puts it in ~/.local/bin)
-ENV PATH="/home/claude/.local/bin:${PATH}"
+# Also add npm-global/bin for host-mounted npm packages
+ENV PATH="/home/claude/.npm-global/bin:/home/claude/.local/bin:${PATH}"
 
 # Set working directory to workspace
 WORKDIR /workspace

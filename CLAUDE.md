@@ -96,10 +96,11 @@ Google Cloud credentials are mounted read-only from `~/.config/gcloud`.
 - **User**: `claude` (UID 1000) for `--userns=keep-id` compatibility
 - **Mounts**:
   - Current directory → `/workspace`
-  - Global settings (shared): `~/.claude/{settings.json,settings.local.json,.credentials.json,keybindings.json,CLAUDE.md,plugins,statsig,hooks,commands,skills,agents,rules}`
-  - Project data (isolated): `~/.claude/ccbox-projects/{project}_{hash}/` → session data, history, todos
+  - Global settings (shared): `~/.claude/{settings.json,settings.local.json,.credentials.json,keybindings.json,CLAUDE.md,statsig,hooks,commands,skills,agents,rules}`
+  - Project data (isolated): `~/.claude/ccbox-projects/{project}_{hash}/` → session data, history, todos, plugins
   - `~/.claude.json` → `/home/claude/.claude.json`
   - `~/.config/gcloud` → `/home/claude/.config/gcloud` (read-only)
+  - npm global prefix → `/home/claude/.npm-global` (read-only, auto-detected)
   - PulseAudio socket (for audio support)
   - `/etc/localtime` (for timezone sync)
 - **SELinux**: Uses `:Z` volume labels for private relabeling
@@ -116,6 +117,35 @@ Image pasting (CTRL+V) is enabled by default. The container mounts display socke
 To disable clipboard access: `./ccbox --no-clipboard`
 
 **Note**: Clipboard image pasting in containers has known limitations. If CTRL+V doesn't work, use file paths instead (e.g., paste `/path/to/image.png`).
+
+## npm Global Packages
+
+Global npm packages (like `typescript-language-server`) are auto-detected and mounted read-only from the host: **install on host, use in container**.
+
+### Setup
+Configure npm to use a user-local prefix (required for non-system installations):
+```bash
+# On host (one-time setup)
+npm config set prefix ~/.npm-global
+export PATH="$HOME/.npm-global/bin:$PATH"  # Add to ~/.bashrc
+
+# Install packages globally
+npm install -g typescript-language-server
+```
+
+### Usage
+The container auto-detects `npm config get prefix` and mounts it if it's a user directory:
+```bash
+./ccbox  # Auto-detects ~/.npm-global
+
+# Or specify explicitly
+./ccbox --npm-global /custom/npm/prefix
+```
+
+### Security
+- Mounted **read-only**: `npm install -g` inside the container will fail
+- System directories (`/usr`, `/usr/local`) are never mounted
+- Only user-local prefixes (like `~/.npm-global`) are mounted
 
 ## License
 
