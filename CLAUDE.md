@@ -162,7 +162,7 @@ Google Cloud credentials are mounted read-only from `~/.config/gcloud`.
   - npm global prefix → `/home/claude/.npm-global` (read-only, auto-detected)
   - PulseAudio socket (for audio support)
   - `/etc/localtime` (for timezone sync)
-- **SELinux**: Uses `:Z` volume labels for private relabeling
+- **SELinux**: Uses `:z` volume labels for shared relabeling (supports multi-session)
 - **Firewall**: Optional, requires `NET_ADMIN` and `NET_RAW` capabilities
 - **Project Isolation**: Each project gets its own history and session data in `~/.claude/ccbox-projects/`
 - **Multi-Session**: Multiple sessions can run simultaneously per project, each with a unique container name (`ccbox-{project}-{hash}-{session-id}`)
