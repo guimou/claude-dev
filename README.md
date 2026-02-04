@@ -79,6 +79,31 @@ You can run multiple sessions simultaneously in the same project directory. Each
 
 The container image is automatically pulled from `quay.io/guimou/ccbox` on first run.
 
+## What's Included
+
+The container includes common development tools that Claude Code can use directly or through skills and hooks.
+
+| Category | Tools |
+|----------|-------|
+| **Editors** | vim, nano |
+| **Search** | ripgrep (`rg`), fd-find (`fd`), tree |
+| **Languages** | Node.js (npm, pnpm), Python 3 (pip, virtualenv) |
+| **Build** | make, cmake, gcc, g++, pkg-config |
+| **Version Control** | git, gh (GitHub CLI) |
+| **Code Quality** | ruff, ShellCheck |
+| **Database Clients** | sqlite, psql, mysql, redis-cli |
+| **DevOps** | kubectl, ansible |
+| **Networking** | curl, openssh-clients, bind-utils |
+| **Other** | graphviz, jq, xclip, wl-clipboard |
+
+To add packages, clone the repo, edit `os-packages.txt`, and build locally:
+
+```bash
+echo "your-package" >> os-packages.txt
+./ccbox --build
+./ccbox --local
+```
+
 ## Configuration
 
 ### Vertex AI
