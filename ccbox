@@ -328,7 +328,7 @@ PODMAN_ARGS=(
     -it
     --name "$CONTAINER_NAME"
     --hostname ccbox
-    --userns=keep-id
+    --userns=keep-id:uid=1000,gid=1000
     -e PROJECT_NAME="$(basename "$WORKSPACE_DIR")"
     -v "${WORKSPACE_DIR}:/workspace:z"
     # Global settings (shared across all projects)
