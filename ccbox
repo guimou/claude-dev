@@ -313,7 +313,7 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Examples:"
             echo "  $(basename "$0")                              # Pull latest and run"
-            echo "  $(basename "$0") --claude-version 2.1.29      # Pull specific version"
+            echo "  $(basename "$0") --claude-version 2.1.31      # Pull specific version"
             echo "  $(basename "$0") --local                      # Use local image"
             echo "  $(basename "$0") --build                      # Build locally"
             echo "  $(basename "$0") --with-firewall              # Run with network restrictions"

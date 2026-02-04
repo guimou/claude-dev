@@ -53,7 +53,7 @@ Run `ccbox --install` to get OS and shell-specific installation instructions:
 ccbox
 
 # Use a specific Claude Code version (if a container build exists for this version)
-ccbox --claude-version 2.1.29
+ccbox --claude-version 2.1.31
 
 # Pass arguments directly to Claude Code
 ccbox -- --help
@@ -126,7 +126,7 @@ Your gcloud credentials (`~/.config/gcloud`) are mounted read-only.
 Create a `CLAUDE_VERSION` file in the ccbox directory:
 
 ```bash
-echo "2.1.29" > ~/path/to/ccbox/CLAUDE_VERSION
+echo "2.1.31" > ~/path/to/ccbox/CLAUDE_VERSION
 ```
 
 This ensures everyone uses the same version. The `--claude-version` flag overrides this file.
@@ -294,7 +294,7 @@ echo "example.com" >> firewall-domains.txt
 ccbox --build
 
 # Build with specific version
-ccbox --build --claude-version 2.1.29
+ccbox --build --claude-version 2.1.31
 
 # Use the local image
 ccbox --local
