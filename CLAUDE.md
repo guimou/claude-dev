@@ -15,7 +15,7 @@ By default, the container image is pulled from `quay.io/guimou/ccbox`.
 ./ccbox
 
 # Launch with specific version from registry
-./ccbox --claude-version 2.1.31
+./ccbox --claude-version <version>
 
 # Launch with locally-built image
 ./ccbox --local
@@ -44,7 +44,7 @@ For local development, you can build the image locally:
 ./ccbox --build
 
 # Build specific version locally
-./ccbox --build --claude-version 2.1.31
+./ccbox --build --claude-version <version>
 ```
 
 ## File Structure
@@ -118,8 +118,8 @@ echo "example.com" >> firewall-domains.txt
 ### Pinning Claude Code Version
 Create a `CLAUDE_VERSION` file to pin the version (useful for teams):
 ```bash
-echo "2.1.31" > CLAUDE_VERSION
-./ccbox  # Will use version 2.1.31
+echo "<version>" > CLAUDE_VERSION
+./ccbox  # Will use the specified version
 ```
 The `--claude-version` CLI flag takes precedence over the file.
 
