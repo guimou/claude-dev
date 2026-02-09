@@ -1,18 +1,24 @@
 name: Build and Push Container Image
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'CLAUDE_VERSION'
-      - 'Dockerfile'
-      - 'os-packages.txt'
-      - 'firewall-domains.txt'
-      - 'init-firewall.sh'
+  workflow_call:
+    inputs:
+      claude_version:
+        description: 'Claude Code version (leave empty to use CLAUDE_VERSION file)'
+        required: false
+        type: string
+      image_tag:
+        description: 'Image tag to apply (e.g., 2.1.37 or 2.1.37-1). Defaults to claude_version.'
+        required: false
+        type: string
   workflow_dispatch:
     inputs:
       claude_version:
         description: 'Claude Code version (leave empty to use CLAUDE_VERSION file)'
+        required: false
+        type: string
+      image_tag:
+        description: 'Image tag to apply (e.g., 2.1.37 or 2.1.37-1). Defaults to claude_version.'
         required: false
         type: string
 
@@ -33,8 +39,8 @@ jobs:
       - name: Read CLAUDE_VERSION file
         id: version
         run: |
-          if [ -n "${{ github.event.inputs.claude_version }}" ]; then
-            VERSION="${{ github.event.inputs.claude_version }}"
+          if [ -n "${{ inputs.claude_version }}" ]; then
+            VERSION="${{ inputs.claude_version }}"
           elif [ -f CLAUDE_VERSION ]; then
             VERSION=$(cat CLAUDE_VERSION | tr -d '[:space:]')
           else
@@ -59,7 +65,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ steps.version.outputs.claude_version }},enable=${{ steps.version.outputs.claude_version != '' }}
+            type=raw,value=${{ inputs.image_tag || steps.version.outputs.claude_version }},enable=${{ inputs.image_tag != '' || steps.version.outputs.claude_version != '' }}
             type=raw,value=latest
             type=sha,prefix=,format=short
 
