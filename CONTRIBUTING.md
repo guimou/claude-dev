@@ -107,10 +107,10 @@ To release a new version:
 
 ```bash
 # Update the version file
-echo "2.1.32" > CLAUDE_VERSION
+echo "2.1.37" > CLAUDE_VERSION
 
 # Commit and push
 git add CLAUDE_VERSION
-git commit -m "chore: bump Claude Code version to 2.1.32"
+git commit -m "chore: bump Claude Code version to 2.1.37"
 git push origin main
 ```
