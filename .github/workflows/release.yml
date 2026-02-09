@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'CLAUDE_VERSION'
+      - 'Dockerfile'
+      - 'os-packages.txt'
+      - 'firewall-domains.txt'
+      - 'init-firewall.sh'
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-and-push.yml
+    secrets: inherit
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine release tag
+        id: tag
+        run: |
+          VERSION=$(cat CLAUDE_VERSION | tr -d '[:space:]')
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+          # Check if CLAUDE_VERSION was changed in this commit
+          if git diff HEAD~1 HEAD -- CLAUDE_VERSION | grep -q '^[+-][0-9]'; then
+            TAG="v${VERSION}"
+          else
+            # Find the highest existing suffix for this version
+            ESCAPED_VERSION=$(echo "$VERSION" | sed 's/\./\\./g')
+            LAST=$(git tag --list "v${VERSION}-*" | sed "s/v${ESCAPED_VERSION}-//" | sort -n | tail -1)
+            if [ -z "$LAST" ]; then
+              N=1
+            else
+              N=$((LAST + 1))
+            fi
+            TAG="v${VERSION}-${N}"
+          fi
+
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+
+          # Check if the tag already exists
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "Tag ${TAG} already exists, skipping release"
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+            echo "Will create release ${TAG}"
+          fi
+
+      - name: Create GitHub Release
+        if: steps.tag.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          VERSION="${{ steps.tag.outputs.version }}"
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes "Container image: \`quay.io/guimou/ccbox:${VERSION}\`" \
+            --target "${{ github.sha }}"
