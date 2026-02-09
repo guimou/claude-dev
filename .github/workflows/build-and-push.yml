@@ -7,10 +7,18 @@ on:
         description: 'Claude Code version (leave empty to use CLAUDE_VERSION file)'
         required: false
         type: string
+      image_tag:
+        description: 'Image tag to apply (e.g., 2.1.37 or 2.1.37-1). Defaults to claude_version.'
+        required: false
+        type: string
   workflow_dispatch:
     inputs:
       claude_version:
         description: 'Claude Code version (leave empty to use CLAUDE_VERSION file)'
+        required: false
+        type: string
+      image_tag:
+        description: 'Image tag to apply (e.g., 2.1.37 or 2.1.37-1). Defaults to claude_version.'
         required: false
         type: string
 
@@ -57,7 +65,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=${{ steps.version.outputs.claude_version }},enable=${{ steps.version.outputs.claude_version != '' }}
+            type=raw,value=${{ inputs.image_tag || steps.version.outputs.claude_version }},enable=${{ inputs.image_tag != '' || steps.version.outputs.claude_version != '' }}
             type=raw,value=latest
             type=sha,prefix=,format=short
 

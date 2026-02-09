@@ -12,15 +12,15 @@ on:
       - 'ccbox'
 
 jobs:
-  build:
-    uses: ./.github/workflows/build-and-push.yml
-    secrets: inherit
-
-  release:
-    needs: build
+  compute-tag:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      image_tag: ${{ steps.tag.outputs.image_tag }}
+      version: ${{ steps.tag.outputs.version }}
+      skip: ${{ steps.tag.outputs.skip }}
 
     steps:
       - name: Checkout repository
@@ -37,6 +37,7 @@ jobs:
           # Check if CLAUDE_VERSION was changed in this commit
           if git diff HEAD~1 HEAD -- CLAUDE_VERSION | grep -q '^[+-][0-9]'; then
             TAG="v${VERSION}"
+            IMAGE_TAG="${VERSION}"
           else
             # Find the highest existing suffix for this version
             ESCAPED_VERSION=$(echo "$VERSION" | sed 's/\./\\./g')
@@ -47,9 +48,11 @@ jobs:
               N=$((LAST + 1))
             fi
             TAG="v${VERSION}-${N}"
+            IMAGE_TAG="${VERSION}-${N}"
           fi
 
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
 
           # Check if the tag already exists
           if git rev-parse "$TAG" >/dev/null 2>&1; then
@@ -57,22 +60,42 @@ jobs:
             echo "Tag ${TAG} already exists, skipping release"
           else
             echo "skip=false" >> $GITHUB_OUTPUT
-            echo "Will create release ${TAG}"
+            echo "Will create release ${TAG} with image tag ${IMAGE_TAG}"
           fi
 
+  build:
+    needs: compute-tag
+    if: needs.compute-tag.outputs.skip != 'true'
+    uses: ./.github/workflows/build-and-push.yml
+    with:
+      image_tag: ${{ needs.compute-tag.outputs.image_tag }}
+    secrets: inherit
+
+  release:
+    needs: [compute-tag, build]
+    if: needs.compute-tag.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Create GitHub Release
-        if: steps.tag.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="${{ steps.tag.outputs.tag }}"
-          VERSION="${{ steps.tag.outputs.version }}"
+          TAG="${{ needs.compute-tag.outputs.tag }}"
+          IMAGE_TAG="${{ needs.compute-tag.outputs.image_tag }}"
 
           # Find previous release tag for changelog range
           PREV_TAG=$(git tag --list 'v*' --sort=-version:refname | head -1)
 
           # Build release notes with PR-style content
-          NOTES="Container image: \`quay.io/guimou/ccbox:${VERSION}\`"
+          NOTES="Container image: \`quay.io/guimou/ccbox:${IMAGE_TAG}\`"
           NOTES="${NOTES}"$'\n\n'"## Changes"$'\n'
           if [ -n "$PREV_TAG" ]; then
             NOTES="${NOTES}$(git log "${PREV_TAG}..HEAD" --pretty=format:'- %s (%h)' --reverse)"
