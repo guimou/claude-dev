@@ -9,6 +9,7 @@ on:
       - 'os-packages.txt'
       - 'firewall-domains.txt'
       - 'init-firewall.sh'
+      - 'ccbox'
 
 jobs:
   build:
@@ -66,7 +67,20 @@ jobs:
         run: |
           TAG="${{ steps.tag.outputs.tag }}"
           VERSION="${{ steps.tag.outputs.version }}"
+
+          # Find previous release tag for changelog range
+          PREV_TAG=$(git tag --list 'v*' --sort=-version:refname | head -1)
+
+          # Build release notes with PR-style content
+          NOTES="Container image: \`quay.io/guimou/ccbox:${VERSION}\`"
+          NOTES="${NOTES}"$'\n\n'"## Changes"$'\n'
+          if [ -n "$PREV_TAG" ]; then
+            NOTES="${NOTES}$(git log "${PREV_TAG}..HEAD" --pretty=format:'- %s (%h)' --reverse)"
+          else
+            NOTES="${NOTES}$(git log --pretty=format:'- %s (%h)' --reverse)"
+          fi
+
           gh release create "$TAG" \
             --title "$TAG" \
-            --notes "Container image: \`quay.io/guimou/ccbox:${VERSION}\`" \
+            --notes "$NOTES" \
             --target "${{ github.sha }}"
