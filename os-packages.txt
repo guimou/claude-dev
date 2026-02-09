@@ -85,6 +85,7 @@ graphviz
 ruff
 
 # Container/orchestration tools
+helm
 kubernetes1.33-client
 
 # Configuration management (DevOps skills)

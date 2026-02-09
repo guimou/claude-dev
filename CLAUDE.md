@@ -87,6 +87,7 @@ The container comes pre-installed with tools commonly used by Claude Code plugin
 - **sqlite**, **psql** (PostgreSQL), **mysql**, **redis-cli**
 
 ### DevOps
+- **helm** - Kubernetes package manager
 - **kubectl** - Kubernetes CLI
 - **ansible** - Configuration management
 
